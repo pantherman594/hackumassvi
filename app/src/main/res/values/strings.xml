@@ -3,4 +3,7 @@
     <string name="title_activity_login">LoginActivity</string>
     <string name="facebook_app_id">478956205949508</string>
     <string name="fb_login_protocol_scheme">fb478956205949508</string>
+
+    <color name="fb_blue">#43609C</color>
+    <string name="title_activity_search">SearchActivity</string>
 </resources>

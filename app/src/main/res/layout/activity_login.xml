@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/com_facebook_button_background_color"
+    android:id="@+id/login_background"
     tools:context=".LoginActivity">
 
     <include layout="@layout/content_login" />
