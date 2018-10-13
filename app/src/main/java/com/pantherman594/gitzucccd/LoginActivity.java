@@ -36,8 +36,7 @@ public class LoginActivity extends AppCompatActivity {
                 new FacebookCallback<LoginResult>() {
                     @Override
                     public void onSuccess(LoginResult loginResult) {
-                        AccessToken token = loginResult.getAccessToken();
-                        sendToMain(token);
+                        sendToMain();
                     }
 
                     @Override
@@ -54,16 +53,16 @@ public class LoginActivity extends AppCompatActivity {
         AccessToken accessToken = AccessToken.getCurrentAccessToken();
         boolean isLoggedIn = accessToken != null && !accessToken.isExpired();
         if (isLoggedIn) {
-            sendToMain(accessToken);
+            sendToMain();
         } else {
             // Start login
             LoginManager.getInstance().logInWithReadPermissions(this, PERMISSIONS);
         }
     }
 
-    private void sendToMain(AccessToken token) {
+    private void sendToMain() {
         Intent sendToMain = new Intent(LoginActivity.this, MainActivity.class);
-        sendToMain.putExtra("token", token);
+        sendToMain.putExtra("action", "login");
         startActivity(sendToMain);
     }
 

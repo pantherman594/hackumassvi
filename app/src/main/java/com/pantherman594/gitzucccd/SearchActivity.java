@@ -1,7 +1,11 @@
 package com.pantherman594.gitzucccd;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -19,50 +23,182 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLDecoder;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
+// NOTE: While this holds the code for SearchActivity, the WebView is actually run under GitZucccdApplication.
+// The WebView is not tied to this Activity.
 public class SearchActivity extends AppCompatActivity {
+
+    private WebView browser;
+    private Deque<String> profUrls;
+
+    private static int num = 0;
 
     @JavascriptInterface
     public void processHTML(String html) throws UnsupportedEncodingException {
         if (html == null)
             return;
+        // Parse the html and extract the profile pictures
         Document doc = Jsoup.parse(html);
         Elements elements = doc.select(".img.profpic");
 
         List<String> imgUrls = new ArrayList<>();
-        List<String> profUrls = new ArrayList<>();
+        profUrls = new ArrayDeque<>();
+
         for (Element elem : elements) {
+            // Parse the profile picture's background style to get the thumbnail url
             String imgStyle = elem.attr("style");
             String background = imgStyle.split("; ")[0];
             String bgValue = background.split(":")[1];
             String imgUrlEncoded = bgValue.replaceAll("^.+url\\('", "").replaceAll("'\\).+$", "");
             String imgUrl = URLDecoder.decode(imgUrlEncoded.replace(" ", "").replace("\\", "%"), "UTF-8");
             imgUrls.add(imgUrl);
+            String name = elem.attr("aria-label");
             Log.d("LAAAA", imgUrl);
 
+            // Get the profile url from the parent element
             Element parent = elem.parent();
-            profUrls.add(parent.attr("href"));
-            Log.d("LBBBB", parent.attr("href"));
+            String profUrl = parent.attr("href");
+
+            if (profUrl.length() < 5) continue;
+            profUrls.addLast(profUrl.substring(1));
+            Friend friend = new Friend(profUrl.substring(1), name);
+            num++;
+            new DownloadImgOperation(imgUrl, friend, null, new Runnable() {
+                @Override
+                public void run() {
+                    Log.d("NNNN", "" + num);
+                    if (--num == 0) {
+                        Intent sendToFriends = new Intent(SearchActivity.this, FriendsActivity.class);
+                        startActivity(sendToFriends);
+                    }
+                }
+            }).execute("");
+            Log.d("LBBBB", profUrl);
+        }
+
+        for (String profUrl : profUrls) {
+            Log.d("PROFFFFF", ">" + profUrl);
+        }
+
+        Log.d("SSStep", "1");
+        final String nextProf = profUrls.pop();
+        Log.d("SSStep", "2");
+
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                browser = ((GitZucccdApplication) getApplication()).getBrowser();
+//                browser.setWebViewClient(new WebViewClient() {
+//                    @Override
+//                    public void onPageFinished(WebView view, String url) {
+//                        Log.d("PROFF", "finished");
+//                        Log.d("PROFF", nextProf);
+//
+//                        browser.loadUrl("javascript:window.HTMLOUT.processFriend('" + nextProf + "', '<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');");
+//                    }
+//                });
+//                Log.d("SSStep", "3");
+//
+//                Log.d("PROFFu", nextProf);
+//                Log.d("PROFFurl", Friend.getProfUrl(nextProf));
+//                browser.loadUrl(Friend.getProfUrl(nextProf));
+//            }
+//        });
+    }
+
+    @JavascriptInterface
+    public void processFriend(String username, String html) {
+        if (html == null)
+            return;
+        Log.d("PROFF", username);
+        // Parse the html and extract the profile pictures
+        Document doc = Jsoup.parse(html);
+        String profPicUrl = doc.select(".timeline a>div>i.img.profpic").first().parent().parent().attr("href");
+        if (profPicUrl.startsWith("/photo.php")) {
+            profPicUrl = profPicUrl.substring("/photo.php?fbid=".length()).replaceAll("&id=.+$", "");
+            profPicUrl = "https://m.facebook.com/photo/view_full_size/?fbid=" + profPicUrl;
+
+            final String profPicUrlFinal = profPicUrl;
+
+            String name = doc.select("#cover-name-root h3").text();
+
+            if (profUrls.isEmpty()) {
+                Log.d("DDDDD", "SEND TO FRIENDS");
+                Intent sendToFriends = new Intent(SearchActivity.this, FriendsActivity.class);
+                startActivity(sendToFriends);
+                return;
+            }
+            final String nextProf = profUrls.pop();
+
+            final Friend friend = new Friend(username, name);
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    browser.setWebViewClient(new WebViewClient() {
+                        @Override
+                        public boolean shouldOverrideUrlLoading(WebView view, final String url) {
+                            new DownloadImgOperation(url, friend, nextProf, new Runnable() {
+                                @Override
+                                public void run() {
+                                    processNext(nextProf);
+                                }
+                            }).execute("");
+
+                            return false;
+                        }
+                    });
+
+                    browser.loadUrl(profPicUrlFinal);
+                }
+            });
+        } else {
+            if (profUrls.isEmpty()) {
+                Log.d("DDDDD", "SEND TO FRIENDS");
+                Intent sendToFriends = new Intent(SearchActivity.this, FriendsActivity.class);
+                startActivity(sendToFriends);
+                return;
+            }
+            final String nextProf = profUrls.pop();
+            processNext(nextProf);
         }
     }
 
+    private void processNext(final String nextProf) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                browser.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public void onPageFinished(WebView view, String url) {
+                        browser.loadUrl("javascript:window.HTMLOUT.processFriend('" + nextProf + "', '<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');");
+                    }
+                });
+
+                browser.loadUrl(Friend.getProfUrl(nextProf));
+            }
+        });
+    }
+
+    @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @TargetApi(Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-        Intent intent = getIntent();
-        AccessToken token = intent.getParcelableExtra("token");
-
-        String userId = token.getUserId();
-
-        final WebView browser = (WebView) findViewById(R.id.search_webview);
+        // Get the webview from the application
+        browser = ((GitZucccdApplication) getApplication()).getBrowser();
         browser.getSettings().setJavaScriptEnabled(true);
         browser.addJavascriptInterface(this, "HTMLOUT");
 
@@ -71,7 +207,23 @@ public class SearchActivity extends AppCompatActivity {
             public void onPageFinished(WebView view, String url) {
                 if (!url.contains("friends")) return;
 
-                browser.loadUrl("javascript:function scrollBottom(oldHeight, callback) {if (document.body.scrollHeight !== oldHeight) { var newHeight = document.body.scrollHeight; console.log(newHeight); window.scrollTo(0, 999999999); setTimeout(function() {scrollBottom(newHeight, callback);}, 3000); } else { callback(); } } scrollBottom(0, function() { window.HTMLOUT.processHTML('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>'); });");
+                // Inject JavaScript to go to the bottom of the page. If it goes no further, send it to processHTML().
+                browser.loadUrl("javascript:" +
+                        "function scrollBottom(oldHeight, callback) {" +
+                            "if (document.body.scrollHeight !== oldHeight) {" +
+                                "var newHeight = document.body.scrollHeight;" +
+                                "window.scrollTo(0, 999999999);" +
+                                "setTimeout(function() {" +
+                                    "scrollBottom(newHeight, callback);" +
+                                "}, 3000);" +
+                            "} else {" +
+                                "callback();" +
+                            "}" +
+                        "}" +
+                        "scrollBottom(0, function() {" +
+                            // This sends the html to the processHTML function
+                            "window.HTMLOUT.processHTML('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');" +
+                        "});");
             }
         };
 
@@ -80,8 +232,7 @@ public class SearchActivity extends AppCompatActivity {
             public void onPageFinished(WebView view, String url) {
                 if (!url.contains("home.php")) return;
 
-                Toast.makeText(getApplicationContext(), "Logged in!",
-                        Toast.LENGTH_LONG).show();
+                // Wait until the user is logged in, then load the friends list
                 browser.setWebViewClient(loadFriendsClient);
                 browser.loadUrl("https://m.facebook.com/me/friends");
             }
@@ -90,19 +241,51 @@ public class SearchActivity extends AppCompatActivity {
         browser.setWebViewClient(logInClient);
         browser.loadUrl("https://m.facebook.com/login.php");
 
-//        Log.d("USERID", userId);
-//        GraphRequest request = GraphRequest.newMyFriendsRequest(
-//                token,
-//                new GraphRequest.GraphJSONArrayCallback() {
-//                    @Override
-//                    public void onCompleted(
-//                           JSONArray array,
-//                           GraphResponse response) {
-//                        Log.d("RESULT", array.toString());
-//                        // Application code
-//                    }
-//                });
-//        request.executeAsync();
+        Intent sendToMain = new Intent(SearchActivity.this, MainActivity.class);
+        sendToMain.putExtra("action", "wait");
+        startActivity(sendToMain);
     }
 
+    private class DownloadImgOperation extends AsyncTask<String, Void, String> {
+        private String url;
+        private Friend friend;
+        private String nextProf;
+        private Runnable callback;
+
+        public DownloadImgOperation(String url, Friend friend, String nextProf, Runnable callback) {
+            this.url = url;
+            this.friend = friend;
+            this.nextProf = nextProf;
+            this.callback = callback;
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            Log.d("UUUUUU", url);
+            try {
+                URL dlUrl = new URL(url);
+
+                HttpURLConnection connection = (HttpURLConnection) dlUrl.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+
+                InputStream input = connection.getInputStream();
+                Bitmap myBitmap = BitmapFactory.decodeStream(input);
+
+                friend.setProfImg(myBitmap);
+                Friend.addFriend(friend);
+
+                //processNext(nextProf);
+            } catch (IOException ignored) {
+                // TODO: show error with download
+                //processNext(nextProf);
+            }
+            return "";
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            callback.run();
+        }
+    }
 }

@@ -16,13 +16,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Intent intent = getIntent();
-        AccessToken token = intent.getParcelableExtra("token");
-        sendToSearch(token);
+        String action = intent.getStringExtra("action");
+        if (!action.equals("wait")) {
+            sendToSearch();
+        }
     }
 
-    private void sendToSearch(AccessToken token) {
-        Intent sendToMain = new Intent(MainActivity.this, SearchActivity.class);
-        sendToMain.putExtra("token", token);
-        startActivity(sendToMain);
+    private void sendToSearch() {
+        Intent sendToSearch = new Intent(MainActivity.this, SearchActivity.class);
+        startActivity(sendToSearch);
     }
 }
