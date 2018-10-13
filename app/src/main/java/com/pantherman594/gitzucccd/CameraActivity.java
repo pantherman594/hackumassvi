@@ -9,6 +9,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
+
 import static android.support.v4.app.ActivityCompat.startActivityForResult;
 import static com.pantherman594.gitzucccd.CameraActivity.CAM_REQUEST;
 
@@ -37,6 +39,7 @@ public class CameraActivity extends AppCompatActivity {
         if(requestCode == CAM_REQUEST){
             Bitmap bitmap = (Bitmap) data.getExtras().get("data");
             imgTakenPic.setImageBitmap(bitmap);
+            Toast.makeText(this, "Picture sucessfully saved", Toast.LENGTH_SHORT).show();
         }
     }
 
