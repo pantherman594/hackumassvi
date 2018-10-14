@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Camera;
 import android.graphics.Canvas;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
@@ -51,7 +50,6 @@ import java.util.List;
 public class SearchActivity extends AppCompatActivity {
 
     private WebView browser;
-    private Deque<String> profUrls;
 
     private static int num = 0;
 
@@ -63,9 +61,6 @@ public class SearchActivity extends AppCompatActivity {
         Document doc = Jsoup.parse(html);
         Elements elements = doc.select(".img.profpic");
 
-        List<String> imgUrls = new ArrayList<>();
-        profUrls = new ArrayDeque<>();
-
         for (Element elem : elements) {
             // Parse the profile picture's background style to get the thumbnail url
             String imgStyle = elem.attr("style");
@@ -73,135 +68,26 @@ public class SearchActivity extends AppCompatActivity {
             String bgValue = background.split(":")[1];
             String imgUrlEncoded = bgValue.replaceAll("^.+url\\('", "").replaceAll("'\\).+$", "");
             String imgUrl = URLDecoder.decode(imgUrlEncoded.replace(" ", "").replace("\\", "%"), "UTF-8");
-            imgUrls.add(imgUrl);
             String name = elem.attr("aria-label");
-            Log.d("LAAAA", imgUrl);
 
             // Get the profile url from the parent element
             Element parent = elem.parent();
             String profUrl = parent.attr("href");
 
             if (profUrl.length() < 5) continue;
-            profUrls.addLast(profUrl.substring(1));
             Friend friend = new Friend(profUrl.substring(1), name);
             num++;
-            new DownloadImgOperation(imgUrl, friend, null, new Runnable() {
+            new DownloadImgOperation(imgUrl, friend, new Runnable() {
                 @Override
                 public void run() {
-                    Log.d("NNNN", "" + num);
                     if (--num == 0) {
-                        Log.d("COMPLETE", "COMPLETE");
-
+                        // Send the user to the camera after all the friends have been downloaded
                         Intent sendToCamera = new Intent(SearchActivity.this, CameraActivity.class);
                         startActivity(sendToCamera);
                     }
                 }
             }).execute("");
-            Log.d("LBBBB", profUrl);
         }
-
-        for (String profUrl : profUrls) {
-            Log.d("PROFFFFF", ">" + profUrl);
-        }
-
-        Log.d("SSStep", "1");
-        final String nextProf = profUrls.pop();
-        Log.d("SSStep", "2");
-
-//        runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//                browser = ((GitZucccdApplication) getApplication()).getBrowser();
-//                browser.setWebViewClient(new WebViewClient() {
-//                    @Override
-//                    public void onPageFinished(WebView view, String url) {
-//                        Log.d("PROFF", "finished");
-//                        Log.d("PROFF", nextProf);
-//
-//                        browser.loadUrl("javascript:window.HTMLOUT.processFriend('" + nextProf + "', '<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');");
-//                    }
-//                });
-//                Log.d("SSStep", "3");
-//
-//                Log.d("PROFFu", nextProf);
-//                Log.d("PROFFurl", Friend.getProfUrl(nextProf));
-//                browser.loadUrl(Friend.getProfUrl(nextProf));
-//            }
-//        });
-    }
-
-    @JavascriptInterface
-    public void processFriend(String username, String html) {
-        if (html == null)
-            return;
-        Log.d("PROFF", username);
-        // Parse the html and extract the profile pictures
-        Document doc = Jsoup.parse(html);
-        String profPicUrl = doc.select(".timeline a>div>i.img.profpic").first().parent().parent().attr("href");
-        if (profPicUrl.startsWith("/photo.php")) {
-            profPicUrl = profPicUrl.substring("/photo.php?fbid=".length()).replaceAll("&id=.+$", "");
-            profPicUrl = "https://m.facebook.com/photo/view_full_size/?fbid=" + profPicUrl;
-
-            final String profPicUrlFinal = profPicUrl;
-
-            String name = doc.select("#cover-name-root h3").text();
-
-            if (profUrls.isEmpty()) {
-                Log.d("DDDDD", "SEND TO FRIENDS");
-                Intent sendToFriends = new Intent(SearchActivity.this, FriendsActivity.class);
-                startActivity(sendToFriends);
-                return;
-            }
-            final String nextProf = profUrls.pop();
-
-            final Friend friend = new Friend(username, name);
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    browser.setWebViewClient(new WebViewClient() {
-                        @Override
-                        public boolean shouldOverrideUrlLoading(WebView view, final String url) {
-                            new DownloadImgOperation(url, friend, nextProf, new Runnable() {
-                                @Override
-                                public void run() {
-                                    processNext(nextProf);
-                                }
-                            }).execute("");
-
-                            return false;
-                        }
-                    });
-
-                    browser.loadUrl(profPicUrlFinal);
-                }
-            });
-        } else {
-            if (profUrls.isEmpty()) {
-                Log.d("DDDDD", "SEND TO FRIENDS");
-                Intent sendToFriends = new Intent(SearchActivity.this, FriendsActivity.class);
-                startActivity(sendToFriends);
-                return;
-            }
-            final String nextProf = profUrls.pop();
-            processNext(nextProf);
-        }
-    }
-
-    private void processNext(final String nextProf) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                browser.setWebViewClient(new WebViewClient() {
-                    @Override
-                    public void onPageFinished(WebView view, String url) {
-                        browser.loadUrl("javascript:window.HTMLOUT.processFriend('" + nextProf + "', '<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');");
-                    }
-                });
-
-                browser.loadUrl(Friend.getProfUrl(nextProf));
-            }
-        });
     }
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
@@ -215,7 +101,6 @@ public class SearchActivity extends AppCompatActivity {
         Animation startRotateAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.android_rotate_animation);
         rotateImage.startAnimation(startRotateAnimation);
 
-        Log.d("BBBBBBBBB", "SearchActivity");
         // Get the webview from the application
         // browser = findViewById(R.id.search_webview);
         browser = ((GitZucccdApplication) getApplication()).getBrowser();
@@ -225,11 +110,8 @@ public class SearchActivity extends AppCompatActivity {
         final WebViewClient loadFriendsClient = new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                Log.d("BBBBBBBB", "Pre-INJECT");
-                Log.d("BBBBBBBB", url);
                 if (!url.contains("friends")) return;
 
-                Log.d("BBBBBBBB", "INJECT");
                 // Inject JavaScript to go to the bottom of the page. If it goes no further, send it to processHTML().
                 browser.loadUrl("javascript:" +
                     "function scrollBottom(oldHeight, callback, num = 0) {" +
@@ -258,8 +140,6 @@ public class SearchActivity extends AppCompatActivity {
         final WebViewClient logInClient = new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                Log.d("BBBBBBBB", "Pre-INJECT A");
-                Log.d("BBBBBBBBA", url);
                 if (!url.contains("home.php")) return false;
 
                 // Wait until the user is logged in, then load the friends list
@@ -272,26 +152,23 @@ public class SearchActivity extends AppCompatActivity {
 
         browser.setWebViewClient(logInClient);
         browser.loadUrl("https://m.facebook.com/login.php");
-        Log.d("BBBBBBBBBBBLLLLL", "Load");
     }
 
     private class DownloadImgOperation extends AsyncTask<String, Void, String> {
         private String url;
         private Friend friend;
-        private String nextProf;
         private Runnable callback;
 
-        public DownloadImgOperation(String url, Friend friend, String nextProf, Runnable callback) {
+        public DownloadImgOperation(String url, Friend friend, Runnable callback) {
             this.url = url;
             this.friend = friend;
-            this.nextProf = nextProf;
             this.callback = callback;
         }
 
         @Override
         protected String doInBackground(String... strings) {
-            Log.d("UUUUUU", url);
             try {
+                // Download the image
                 URL dlUrl = new URL(url);
 
                 HttpURLConnection connection = (HttpURLConnection) dlUrl.openConnection();
@@ -299,6 +176,7 @@ public class SearchActivity extends AppCompatActivity {
                 connection.connect();
 
                 InputStream input = connection.getInputStream();
+                // Convert the image into a Bitmap
                 Bitmap downloadedBmp = BitmapFactory.decodeStream(input);
 
                 // Convert the bitmap to grayscale
@@ -313,15 +191,14 @@ public class SearchActivity extends AppCompatActivity {
                 downloadedBmp.recycle();
 
                 try {
-                    Log.d("WWWWWW", friend.getUsername());
-                    // Use the compress method on the Bitmap object to write image to
-                    // the OutputStream
+                    // Use the compress method on the Bitmap object to write image the OutputStream
                     FileOutputStream fos = new FileOutputStream(new File(SearchActivity.this.getFilesDir(), friend.getUsername() + ".png"));
 
-                    // Writing the bitmap to the output stream
+                    // Write the bitmap to the output stream
                     grayscaleBmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
                     fos.close();
 
+                    // Write other user data to a data file
                     OutputStreamWriter outputStreamWriter = new OutputStreamWriter(SearchActivity.this.openFileOutput(friend.getUsername() + ".dat", Context.MODE_PRIVATE));
                     outputStreamWriter.write(friend.getName() + ";;;");
                     outputStreamWriter.write(friend.getUsername() + ";;;");
@@ -330,13 +207,10 @@ public class SearchActivity extends AppCompatActivity {
                 } catch (Exception e) {
                 }
 
+                // Save the friend and add to the database
                 friend.setProfImg(grayscaleBmp);
                 Friend.addFriend(friend);
-
-                //processNext(nextProf);
             } catch (IOException ignored) {
-                // TODO: show error with download
-                //processNext(nextProf);
             }
             return "";
         }

@@ -11,14 +11,8 @@ public class Friend {
     private String username;
     private Bitmap profImg;
     private boolean isId;
-    private List<String> friends;
 
     private static HashMap<String, Friend> friendDatabase = new HashMap<>();
-    private static GitZucccdApplication application;
-
-    public static void setAplication(GitZucccdApplication application) {
-        Friend.application = application;
-    }
 
     public static void addFriend(Friend friend) {
         friendDatabase.put(friend.getUsername(), friend);
@@ -55,22 +49,10 @@ public class Friend {
             this.isId = true;
         }
         this.name = name;
-
-        Log.d("PROFF", String.format("u:%s, n:%s", this.username, name));
-
-        // populate name and img and friends
     }
 
     public String getName() {
         return name;
-    }
-
-    public String getFriendsUrl() {
-        if (isId) {
-            return  "https://m.facebook.com/profile.php?v=friends&id=" + getProfUrl();
-        } else {
-            return "https://m.facebook.com/" + getProfUrl() + "/friends";
-        }
     }
 
     public void setName(String name) {
@@ -112,13 +94,5 @@ public class Friend {
 
     public void setProfImg(Bitmap profImg) {
         this.profImg = profImg;
-    }
-
-    public List<String> getFriends() {
-        return friends;
-    }
-
-    public void setFriends(List<String> friends) {
-        this.friends = friends;
     }
 }
