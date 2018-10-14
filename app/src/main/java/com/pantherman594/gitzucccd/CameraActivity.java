@@ -40,6 +40,10 @@ public class CameraActivity extends AppCompatActivity {
             Bitmap bitmap = (Bitmap) data.getExtras().get("data");
             imgTakenPic.setImageBitmap(bitmap);
             Toast.makeText(this, "Picture sucessfully saved", Toast.LENGTH_SHORT).show();
+
+            Intent sendToFaceMatch = new Intent(CameraActivity.this, FaceMatchActivity.class);
+            sendToFaceMatch.putExtra("target", bitmap);
+            startActivity(sendToFaceMatch);
         }
     }
 

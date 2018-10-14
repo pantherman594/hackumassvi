@@ -1,0 +1,37 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml:2:1-7:12
+INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml:2:1-7:12
+INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml:2:1-7:12
+INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml:2:1-7:12
+INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml:2:1-7:12
+INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml:2:1-7:12
+INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml:2:1-7:12
+	package
+		ADDED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml:3:7-27
+		INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+		INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+	android:versionName
+		ADDED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml:5:7-38
+		INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+		INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+	xmlns:android
+		ADDED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml:2:11-69
+	android:versionCode
+		ADDED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml:4:7-33
+		INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+		INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+uses-sdk
+INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+		ADDED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+		INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+		ADDED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml
+		INJECTED from /home/pantherman594/Documents/GitZucccd/libraries/opencv/AndroidManifest.xml

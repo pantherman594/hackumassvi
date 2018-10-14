@@ -2,9 +2,15 @@ package com.pantherman594.gitzucccd;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Camera;
+import android.graphics.Canvas;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Paint;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,8 +29,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -78,8 +86,10 @@ public class SearchActivity extends AppCompatActivity {
                 public void run() {
                     Log.d("NNNN", "" + num);
                     if (--num == 0) {
-                        Intent sendToFriends = new Intent(SearchActivity.this, FriendsActivity.class);
-                        startActivity(sendToFriends);
+                        Log.d("COMPLETE", "COMPLETE");
+
+                        Intent sendToCamera = new Intent(SearchActivity.this, CameraActivity.class);
+                        startActivity(sendToCamera);
                     }
                 }
             }).execute("");
@@ -197,7 +207,9 @@ public class SearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
+        Log.d("BBBBBBBBB", "SearchActivity");
         // Get the webview from the application
+        // browser = findViewById(R.id.search_webview);
         browser = ((GitZucccdApplication) getApplication()).getBrowser();
         browser.getSettings().setJavaScriptEnabled(true);
         browser.addJavascriptInterface(this, "HTMLOUT");
@@ -205,45 +217,54 @@ public class SearchActivity extends AppCompatActivity {
         final WebViewClient loadFriendsClient = new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
+                Log.d("BBBBBBBB", "Pre-INJECT");
+                Log.d("BBBBBBBB", url);
                 if (!url.contains("friends")) return;
 
+                Log.d("BBBBBBBB", "INJECT");
                 // Inject JavaScript to go to the bottom of the page. If it goes no further, send it to processHTML().
                 browser.loadUrl("javascript:" +
-                        "function scrollBottom(oldHeight, callback) {" +
+                    "function scrollBottom(oldHeight, callback, num = 0) {" +
+                        "if (document.body.scrollHeight !== oldHeight || num < 6) {" +
                             "if (document.body.scrollHeight !== oldHeight) {" +
-                                "var newHeight = document.body.scrollHeight;" +
-                                "window.scrollTo(0, 999999999);" +
-                                "setTimeout(function() {" +
-                                    "scrollBottom(newHeight, callback);" +
-                                "}, 3000);" +
+                                "num = 0;" +
                             "} else {" +
-                                "callback();" +
+                                "num++;" +
                             "}" +
+                            "var newHeight = document.body.scrollHeight;" +
+                            "window.scrollTo(0, 999999999);" +
+                            "setTimeout(function() {" +
+                                "scrollBottom(newHeight, callback, num);" +
+                            "}, 500);" +
+                        "} else {" +
+                            "callback();" +
                         "}" +
-                        "scrollBottom(0, function() {" +
-                            // This sends the html to the processHTML function
-                            "window.HTMLOUT.processHTML('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');" +
-                        "});");
+                    "}" +
+                    "scrollBottom(0, function() {" +
+                        // This sends the html to the processHTML function
+                        "window.HTMLOUT.processHTML('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');" +
+                    "});");
             }
         };
 
         final WebViewClient logInClient = new WebViewClient() {
             @Override
-            public void onPageFinished(WebView view, String url) {
-                if (!url.contains("home.php")) return;
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                Log.d("BBBBBBBB", "Pre-INJECT A");
+                Log.d("BBBBBBBBA", url);
+                if (!url.contains("home.php")) return false;
 
                 // Wait until the user is logged in, then load the friends list
                 browser.setWebViewClient(loadFriendsClient);
                 browser.loadUrl("https://m.facebook.com/me/friends");
+
+                return false;
             }
         };
 
         browser.setWebViewClient(logInClient);
         browser.loadUrl("https://m.facebook.com/login.php");
-
-        Intent sendToMain = new Intent(SearchActivity.this, MainActivity.class);
-        sendToMain.putExtra("action", "wait");
-        startActivity(sendToMain);
+        Log.d("BBBBBBBBBBBLLLLL", "Load");
     }
 
     private class DownloadImgOperation extends AsyncTask<String, Void, String> {
@@ -270,9 +291,38 @@ public class SearchActivity extends AppCompatActivity {
                 connection.connect();
 
                 InputStream input = connection.getInputStream();
-                Bitmap myBitmap = BitmapFactory.decodeStream(input);
+                Bitmap downloadedBmp = BitmapFactory.decodeStream(input);
 
-                friend.setProfImg(myBitmap);
+                // Convert the bitmap to grayscale
+                Bitmap grayscaleBmp = Bitmap.createBitmap(downloadedBmp.getWidth(), downloadedBmp.getHeight(), Bitmap.Config.RGB_565);
+                Canvas c = new Canvas(grayscaleBmp);
+                Paint paint = new Paint();
+                ColorMatrix cm = new ColorMatrix();
+                cm.setSaturation(0);
+                ColorMatrixColorFilter f = new ColorMatrixColorFilter(cm);
+                paint.setColorFilter(f);
+                c.drawBitmap(downloadedBmp, 0, 0, paint);
+                downloadedBmp.recycle();
+
+                try {
+                    Log.d("WWWWWW", friend.getUsername());
+                    // Use the compress method on the Bitmap object to write image to
+                    // the OutputStream
+                    FileOutputStream fos = SearchActivity.this.openFileOutput(friend.getUsername() + ".png", Context.MODE_PRIVATE);
+
+                    // Writing the bitmap to the output stream
+                    grayscaleBmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                    fos.close();
+
+                    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(SearchActivity.this.openFileOutput(friend.getUsername() + ".dat", Context.MODE_PRIVATE));
+                    outputStreamWriter.write(friend.getName() + ";;;");
+                    outputStreamWriter.write(friend.getUsername() + ";;;");
+                    outputStreamWriter.write(String.valueOf(friend.isId()));
+                    outputStreamWriter.close();
+                } catch (Exception e) {
+                }
+
+                friend.setProfImg(grayscaleBmp);
                 Friend.addFriend(friend);
 
                 //processNext(nextProf);

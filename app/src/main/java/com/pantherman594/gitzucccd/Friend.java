@@ -1,7 +1,6 @@
 package com.pantherman594.gitzucccd;
 
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import java.util.HashMap;
@@ -22,11 +21,11 @@ public class Friend {
     }
 
     public static void addFriend(Friend friend) {
-        friendDatabase.put(friend.getProfUrl(), friend);
+        friendDatabase.put(friend.getUsername(), friend);
     }
 
-    public static Friend getFriend(String url) {
-        return friendDatabase.get(url);
+    public static Friend getFriend(String username) {
+        return friendDatabase.get(username);
     }
 
     public static Friend getFriend(int index) {
@@ -39,6 +38,13 @@ public class Friend {
 
     public static int size() {
         return friendDatabase.size();
+    }
+
+    public Friend(String name, String username, boolean isId, Bitmap profImg) {
+        this.name = name;
+        this.username = username;
+        this.profImg = profImg;
+        this.isId = isId;
     }
 
     public Friend(String username, String name) {
@@ -77,6 +83,10 @@ public class Friend {
 
     public String getUsername() {
         return username;
+    }
+
+    public boolean isId() {
+        return isId;
     }
 
     public String getProfUrl() {

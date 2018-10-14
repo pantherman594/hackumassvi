@@ -19,26 +19,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Intent intent = getIntent();
-        AccessToken token = intent.getParcelableExtra("token");
-        //sendToSearch(token);
-        Log.d("myTag", "this should run before CameraActivity");
         cameraActivity();
     }
 
     private void cameraActivity() {
         Intent takePictureIntent = new Intent(MainActivity.this, CameraActivity.class);
-      //  if (true || takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            Log.d("ugh", "why u no work");
-            startActivity(takePictureIntent);
-        //}
-
-    }
-
-
-    private void sendToSearch(AccessToken token) {
-        Intent sendToMain = new Intent(MainActivity.this, SearchActivity.class);
-        sendToMain.putExtra("token", token);
-        startActivity(sendToMain);
+        startActivity(takePictureIntent);
     }
 }
