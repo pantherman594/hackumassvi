@@ -12,7 +12,6 @@ public class GitZucccdApplication extends Application {
         super.onCreate();
         // Create the webview in the application so that it can persist across activities
         browser = new WebView(this);
-        browser.setId(R.id.search_webview);
         browser.setLayoutParams(new LinearLayout.LayoutParams(1080, 1920));
     }
 
