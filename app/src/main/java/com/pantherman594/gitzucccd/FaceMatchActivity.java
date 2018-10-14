@@ -12,6 +12,7 @@ import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
+import org.opencv.face.FaceRecognizer;
 import org.opencv.face.LBPHFaceRecognizer;
 import org.opencv.imgproc.Imgproc;
 
@@ -41,15 +42,17 @@ public class FaceMatchActivity extends AppCompatActivity {
         if (OpenCVLoader.initDebug()) {
             Pair<String, Double> result = compare(usernames, sourceBmps, target);
 
+            // Send the closest match to ResultActivity
             Intent sendToResult = new Intent(FaceMatchActivity.this, ResultActivity.class);
             sendToResult.putExtra("username", result.first);
             sendToResult.putExtra("confidence", result.second);
             startActivity(sendToResult);
         } else {
-            Log.d("EEEEEEE", "Not loaded!");
+            Log.e("Error", "OpenCV libraries are not loaded!");
         }
     }
 
+    // Processes bitmaps for facial recognition
     private Mat toGrayMat(Bitmap input) {
         Mat output = new Mat();
 
@@ -60,6 +63,7 @@ public class FaceMatchActivity extends AppCompatActivity {
         // Convert to grayscale
         Imgproc.cvtColor(output, output, Imgproc.COLOR_RGB2GRAY, 1);
 
+
         return output;
     }
 
@@ -68,7 +72,10 @@ public class FaceMatchActivity extends AppCompatActivity {
         // Convert source and target bitmaps into Mat
         Mat target = toGrayMat(targetBmp);
 
-        LBPHFaceRecognizer model = LBPHFaceRecognizer.create();
+        FaceRecognizer model = LBPHFaceRecognizer.create();
+
+        double smallestConfidence = 999;
+        int smallestConfidenceIndex = 0;
 
         // Loop through the source bitmaps and train the model with them
         for (int i = 0, len = sourceBmps.length; i < len; i++) {
@@ -79,19 +86,22 @@ public class FaceMatchActivity extends AppCompatActivity {
             src.add(source);
 
             // Create an array of size (cols) 1 and scalar value i
-            Mat labels = new Mat(1, 1, CvType.CV_32SC1, new Scalar(i));
+            Mat labels = new Mat(1, 1, CvType.CV_32SC1, new Scalar(0));
             // Train the model with the source image
-            Log.d("IIIIII", String.valueOf(i));
-            if (i == 0) model.train(src, labels);
-            else model.update(src, labels);
+            model.train(src, labels);
+
+            // Create variables for model.predict to store into
+            int[] predictedLabel = new int[1];
+            double[] confidence = new double[1];
+
+            model.predict(target, predictedLabel, confidence);
+
+            if (confidence[0] < smallestConfidence) {
+                smallestConfidence = confidence[0];
+                smallestConfidenceIndex = i;
+            }
         }
 
-        // Create variables for model.predict to store into
-        int[] predictedLabel = new int[1];
-        double[] confidence = new double[1];
-
-        model.predict(target, predictedLabel, confidence);
-
-        return new Pair<>(usernames[predictedLabel[0]], confidence[0]);
+        return new Pair<>(usernames[smallestConfidenceIndex], smallestConfidence);
     }
 }
