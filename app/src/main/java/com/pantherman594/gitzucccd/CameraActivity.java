@@ -16,9 +16,9 @@ import static com.pantherman594.gitzucccd.CameraActivity.CAM_REQUEST;
 
 public class CameraActivity extends AppCompatActivity {
 
-    Button btnpic;
-    ImageView imgTakenPic;
-    public static final int CAM_REQUEST=1313;
+    private Button btnpic;
+    private ImageView imgTakenPic;
+    public static final int CAM_REQUEST = 1313;
 
 
     @Override
@@ -26,9 +26,8 @@ public class CameraActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        Log.d("myTag2", "this should run after loading camera activity");
-        btnpic = (Button) findViewById(R.id.button);
-        imgTakenPic = (ImageView)findViewById(R.id.imageView);
+        btnpic = findViewById(R.id.button);
+        imgTakenPic = findViewById(R.id.imageView);
         btnpic.setOnClickListener(new btnTakePhotoClicker());
     }
 
@@ -36,11 +35,12 @@ public class CameraActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if(requestCode == CAM_REQUEST){
+        if (requestCode == CAM_REQUEST) {
             Bitmap bitmap = (Bitmap) data.getExtras().get("data");
             imgTakenPic.setImageBitmap(bitmap);
             Toast.makeText(this, "Picture sucessfully saved", Toast.LENGTH_SHORT).show();
 
+            // After saving the picture, send it to the face match activity
             Intent sendToFaceMatch = new Intent(CameraActivity.this, FaceMatchActivity.class);
             sendToFaceMatch.putExtra("target", bitmap);
             startActivity(sendToFaceMatch);

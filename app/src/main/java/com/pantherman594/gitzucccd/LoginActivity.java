@@ -8,15 +8,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Toast;
-
-import com.facebook.AccessToken;
-import com.facebook.CallbackManager;
-import com.facebook.FacebookCallback;
-import com.facebook.FacebookException;
-import com.facebook.login.LoginManager;
-import com.facebook.login.LoginResult;
-import com.facebook.login.widget.LoginButton;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -24,94 +15,59 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.List;
 
 import static android.graphics.BitmapFactory.decodeFile;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final List<String> PERMISSIONS = Arrays.asList("public_profile", "user_friends");
-    private CallbackManager callbackManager;
-
-    // Login to facebook api
+    // Login to facebook via WebView
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface", "AddJavascriptInterface"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        /*callbackManager = CallbackManager.Factory.create();
-        LoginButton loginButton = findViewById(R.id.login_button);
-        loginButton.setReadPermissions(PERMISSIONS);
-
-        LoginManager.getInstance().registerCallback(callbackManager,
-                new FacebookCallback<LoginResult>() {
-                    @Override
-                    public void onSuccess(LoginResult loginResult) {
-                        sendToSearch();
-                    }
-
-                    @Override
-                    public void onCancel() {
-                        Toast.makeText(getApplicationContext(), "Login Cancelled!",
-                                Toast.LENGTH_LONG).show();
-                    }
-
-                    @Override
-                    public void onError(FacebookException exception) {
-                        // App code
-                    }
-                });
-        AccessToken accessToken = AccessToken.getCurrentAccessToken();
-        boolean isLoggedIn = accessToken != null && !accessToken.isExpired();
-        if (isLoggedIn) {
-            Log.d("BBBBBBBBBB", "already logged in");
-            sendToSearch();
-        } else {
-            // Start login
-            LoginManager.getInstance().logInWithReadPermissions(this, PERMISSIONS);
-        }*/
-
-        // Get the webview from the application
         WebView browser = findViewById(R.id.login_webview);
         browser.getSettings().setJavaScriptEnabled(true);
         browser.addJavascriptInterface(this, "HTMLOUT");
 
-        final WebViewClient logInClient = new WebViewClient() {
+        // Send to the search activity once logged in
+        WebViewClient logInClient = new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-            if (url.contains("home.php")) sendToSearch();
+                if (url.contains("home.php")) sendToSearch();
             }
         };
 
         browser.setWebViewClient(logInClient);
         browser.loadUrl("https://m.facebook.com/login.php");
-        Log.d("BBBBBBBBBBBLLLLL", "Load");
     }
 
     private void sendToSearch() {
+
+        // Attempt to load saved data from the cache
         boolean found = false;
         getFilesDir().mkdir();
+
         for (File file : getFilesDir().listFiles()) {
             if (file.getName().endsWith(".dat")) {
                 try {
                     InputStream inputStream = this.openFileInput(file.getName());
 
-                    if ( inputStream != null ) {
+                    if (inputStream != null) {
                         InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
                         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                        String receiveString = "";
-                        StringBuilder stringBuilder = new StringBuilder();
+                        String receiveString;
+                        StringBuilder dataBuilder = new StringBuilder();
 
-                        while ( (receiveString = bufferedReader.readLine()) != null ) {
-                            stringBuilder.append(receiveString);
+                        while ((receiveString = bufferedReader.readLine()) != null) {
+                            dataBuilder.append(receiveString);
                         }
 
                         inputStream.close();
 
-                        Log.d("AAAAAAAAAAAA", stringBuilder.toString());
-                        String[] data = stringBuilder.toString().split(";;;");
+                        String[] data = dataBuilder.toString().split(";;;");
+                        // Delete the data file if it's incomplete
                         if (data.length != 3) {
                             file.delete();
                             continue;
@@ -141,22 +97,15 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
 
-        Log.d("FFFFF", "f" + found);
         if (found) {
+            // If there is a cache, send the user directly to the camera.
             Intent sendToCamera = new Intent(LoginActivity.this, CameraActivity.class);
             startActivity(sendToCamera);
         } else {
+            // If there is no cache, first load SearchActivity to download friends
             Intent sendToSearch = new Intent(LoginActivity.this, SearchActivity.class);
             sendToSearch.putExtra("action", "login");
             startActivity(sendToSearch);
         }
     }
-
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        callbackManager.onActivityResult(requestCode, resultCode, data);
-        super.onActivityResult(requestCode, resultCode, data);
-    }
-
 }

@@ -13,6 +13,7 @@ public class ResultActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
 
+        // Get the username and confidence from FaceMatchActivity, and display it on screen
         Intent intent = getIntent();
         String username = intent.getStringExtra("username");
         double confidence = intent.getDoubleExtra("confidence", 0.0);
