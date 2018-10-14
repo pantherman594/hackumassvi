@@ -29,6 +29,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -308,7 +309,7 @@ public class SearchActivity extends AppCompatActivity {
                     Log.d("WWWWWW", friend.getUsername());
                     // Use the compress method on the Bitmap object to write image to
                     // the OutputStream
-                    FileOutputStream fos = SearchActivity.this.openFileOutput(friend.getUsername() + ".png", Context.MODE_PRIVATE);
+                    FileOutputStream fos = new FileOutputStream(new File(SearchActivity.this.getFilesDir(), friend.getUsername() + ".png"));
 
                     // Writing the bitmap to the output stream
                     grayscaleBmp.compress(Bitmap.CompressFormat.PNG, 100, fos);

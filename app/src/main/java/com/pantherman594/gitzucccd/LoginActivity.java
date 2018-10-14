@@ -120,7 +120,7 @@ public class LoginActivity extends AppCompatActivity {
                         String username = data[1];
                         boolean isId = Boolean.valueOf(data[2]);
 
-                        Bitmap profImg = decodeFile(username + ".png");
+                        Bitmap profImg = decodeFile(new File(getFilesDir(), username + ".png").toString());
 
                         if (profImg == null) {
                             file.delete();
