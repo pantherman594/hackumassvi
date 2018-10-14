@@ -61,7 +61,7 @@ public class FaceMatchActivity extends AppCompatActivity {
         Utils.bitmapToMat(input, output);
 
         // Convert to grayscale
-        Imgproc.cvtColor(output, output, Imgproc.COLOR_RGB2GRAY, 1);
+        Imgproc.cvtColor(output, output, Imgproc.COLOR_RGB2GRAY, 4);
 
 
         return output;
