@@ -2,10 +2,15 @@ package com.pantherman594.gitzucccd;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.media.Image;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Pair;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
@@ -26,11 +31,15 @@ public class FaceMatchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_face_match);
 
-        Intent intent = getIntent();
-        Bitmap target = intent.getParcelableExtra("target");
+        ImageView rotateImage=(ImageView) findViewById(R.id.rotate_image);
+        Animation startRotateAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.android_rotate_animation);
+        rotateImage.startAnimation(startRotateAnimation);
 
-        String[] usernames = new String[Friend.size()];
-        Bitmap[] sourceBmps = new Bitmap[Friend.size()];
+        Intent intent = getIntent();
+        final Bitmap target = intent.getParcelableExtra("target");
+
+        final String[] usernames = new String[Friend.size()];
+        final Bitmap[] sourceBmps = new Bitmap[Friend.size()];
 
         for (int i = 0, size = Friend.size(); i < size; i++) {
             Friend friend = Friend.getFriend(i);
@@ -40,13 +49,20 @@ public class FaceMatchActivity extends AppCompatActivity {
         }
 
         if (OpenCVLoader.initDebug()) {
-            Pair<String, Double> result = compare(usernames, sourceBmps, target);
+            new AsyncTask<String, Void, String>() {
+                @Override
+                protected String doInBackground(String... strings) {
+                    Pair<String, Double> result = compare(usernames, sourceBmps, target);
 
-            // Send the closest match to ResultActivity
-            Intent sendToResult = new Intent(FaceMatchActivity.this, ResultActivity.class);
-            sendToResult.putExtra("username", result.first);
-            sendToResult.putExtra("confidence", result.second);
-            startActivity(sendToResult);
+                    // Send the closest match to ResultActivity
+                    Intent sendToResult = new Intent(FaceMatchActivity.this, ResultActivity.class);
+                    sendToResult.putExtra("username", result.first);
+                    sendToResult.putExtra("confidence", result.second);
+                    startActivity(sendToResult);
+
+                    return null;
+                }
+            }.execute("");
         } else {
             Log.e("Error", "OpenCV libraries are not loaded!");
         }
@@ -62,7 +78,6 @@ public class FaceMatchActivity extends AppCompatActivity {
 
         // Convert to grayscale
         Imgproc.cvtColor(output, output, Imgproc.COLOR_RGB2GRAY, 4);
-
 
         return output;
     }

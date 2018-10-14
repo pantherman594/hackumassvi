@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -16,8 +17,8 @@ import static com.pantherman594.gitzucccd.CameraActivity.CAM_REQUEST;
 
 public class CameraActivity extends AppCompatActivity {
 
-    private Button btnpic;
-    private ImageView imgTakenPic;
+    ImageButton btnpic = (ImageButton)(null);
+    ImageView imgTakenPic;
     public static final int CAM_REQUEST = 1313;
 
 
@@ -26,8 +27,8 @@ public class CameraActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        btnpic = findViewById(R.id.button);
-        imgTakenPic = findViewById(R.id.imageView);
+        btnpic = (ImageButton) findViewById(R.id.imageButton);
+        imgTakenPic = (ImageView)findViewById(R.id.imageView);
         btnpic.setOnClickListener(new btnTakePhotoClicker());
     }
 
