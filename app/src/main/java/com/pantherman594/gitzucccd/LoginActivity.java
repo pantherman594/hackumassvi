@@ -6,8 +6,12 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ImageView;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,6 +30,10 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        ImageView rotateImage = (ImageView) findViewById(R.id.rotate_image);
+        Animation startRotateAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.android_rotate_animation);
+        rotateImage.startAnimation(startRotateAnimation);
 
         WebView browser = findViewById(R.id.login_webview);
         browser.getSettings().setJavaScriptEnabled(true);
@@ -86,7 +94,10 @@ public class LoginActivity extends AppCompatActivity {
                         Friend friend = new Friend(name, username, isId, profImg);
                         Friend.addFriend(friend);
 
-                        found = true;
+                        if (!found) {
+                            found = true;
+                            findViewById(R.id.login_webview).setVisibility(View.INVISIBLE);
+                        }
                     }
                 }
                 catch (FileNotFoundException e) {
@@ -104,7 +115,6 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             // If there is no cache, first load SearchActivity to download friends
             Intent sendToSearch = new Intent(LoginActivity.this, SearchActivity.class);
-            sendToSearch.putExtra("action", "login");
             startActivity(sendToSearch);
         }
     }

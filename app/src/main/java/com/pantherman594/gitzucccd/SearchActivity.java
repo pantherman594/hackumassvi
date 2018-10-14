@@ -88,7 +88,7 @@ public class SearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-        ImageView rotateImage= (ImageView) findViewById(R.id.rotate_image);
+        ImageView rotateImage = (ImageView) findViewById(R.id.rotate_image);
         Animation startRotateAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.android_rotate_animation);
         rotateImage.startAnimation(startRotateAnimation);
 
