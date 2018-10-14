@@ -1,10 +1,8 @@
 package com.pantherman594.gitzucccd;
 
 import android.graphics.Bitmap;
-import android.util.Log;
 
 import java.util.HashMap;
-import java.util.List;
 
 public class Friend {
     private String name;

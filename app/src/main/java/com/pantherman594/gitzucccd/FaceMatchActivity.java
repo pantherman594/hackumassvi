@@ -23,6 +23,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
 public class FaceMatchActivity extends AppCompatActivity {
 
@@ -31,7 +32,7 @@ public class FaceMatchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_face_match);
 
-        ImageView rotateImage=(ImageView) findViewById(R.id.rotate_image);
+        ImageView rotateImage = findViewById(R.id.rotate_image);
         Animation startRotateAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.android_rotate_animation);
         rotateImage.startAnimation(startRotateAnimation);
 
@@ -87,10 +88,9 @@ public class FaceMatchActivity extends AppCompatActivity {
         // Convert source and target bitmaps into Mat
         Mat target = toGrayMat(targetBmp);
 
-        FaceRecognizer model = LBPHFaceRecognizer.create();
 
-        double smallestConfidence = 999;
-        int smallestConfidenceIndex = 0;
+        FaceRecognizer model = ((GitZucccdApplication) getApplication()).getModel();
+        TreeMap<Double, Friend> confidences = new TreeMap<>();
 
         // Loop through the source bitmaps and train the model with them
         for (int i = 0, len = sourceBmps.length; i < len; i++) {
@@ -101,22 +101,22 @@ public class FaceMatchActivity extends AppCompatActivity {
             src.add(source);
 
             // Create an array of size (cols) 1 and scalar value i
-            Mat labels = new Mat(1, 1, CvType.CV_32SC1, new Scalar(0));
-            // Train the model with the source image
-            model.train(src, labels);
+            Mat labels = new Mat(1, 1, CvType.CV_32SC1, new Scalar(i));
+            // Train the model with the source imageid
 
-            // Create variables for model.predict to store into
-            int[] predictedLabel = new int[1];
-            double[] confidence = new double[1];
-
-            model.predict(target, predictedLabel, confidence);
-
-            if (confidence[0] < smallestConfidence) {
-                smallestConfidence = confidence[0];
-                smallestConfidenceIndex = i;
+            try {
+                model.update(src, labels);
+            } catch (Exception e) {
+                model.train(src, labels);
             }
         }
 
-        return new Pair<>(usernames[smallestConfidenceIndex], smallestConfidence);
+        // Create variables for model.predict to store into
+        int[] predictedLabel = new int[1];
+        double[] confidence = new double[1];
+
+        model.predict(target, predictedLabel, confidence);
+
+        return new Pair<>(usernames[predictedLabel[0]], confidence[0]);
     }
 }
